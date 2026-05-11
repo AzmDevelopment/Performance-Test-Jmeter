@@ -1,0 +1,242 @@
+name: Run All JMeter Assignments
+
+# ─────────────────────────────────────────────
+# Triggers – one click via UI, or auto on push
+# ─────────────────────────────────────────────
+on:
+  workflow_dispatch:          # ← "Run workflow" button in GitHub Actions UI
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  JMETER_VERSION: "5.6.3"
+  JAVA_VERSION: "17"
+  # jp@gc plugin version needed by Assignment-3 thread groups
+  JMETER_PLUGINS_MANAGER_VERSION: "1.9"
+  CMDRUNNER_VERSION: "2.3"
+
+jobs:
+
+  # ══════════════════════════════════════════════════════════════
+  # ASSIGNMENT 1 – First Demo Load Test
+  # Target : demowebshop.tricentis.com
+  # Threads: 10  |  Ramp-up: 10 s  |  Duration: 300 s
+  # ══════════════════════════════════════════════════════════════
+  assignment-1-load-test:
+    name: "Assignment 1 – Demo Load Test"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Install JMeter ${{ env.JMETER_VERSION }}
+        run: |
+          wget -q "https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-${JMETER_VERSION}.tgz"
+          tar -xzf "apache-jmeter-${JMETER_VERSION}.tgz"
+          echo "JMETER_HOME=$PWD/apache-jmeter-${JMETER_VERSION}" >> "$GITHUB_ENV"
+          echo "$PWD/apache-jmeter-${JMETER_VERSION}/bin" >> "$GITHUB_PATH"
+
+      - name: Run Assignment 1
+        run: |
+          mkdir -p results/assignment-1
+          jmeter -n \
+            -t "Assignment # 01/Assignment-1-First_DEMO_LoadTest.jmx" \
+            -l "results/assignment-1/results.jtl" \
+            -e -o "results/assignment-1/report"
+
+      - name: Upload Assignment 1 Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: assignment-1-results
+          path: results/assignment-1/
+          retention-days: 30
+
+  # ══════════════════════════════════════════════════════════════
+  # ASSIGNMENT 2 – Data-Driven Search
+  # Target : demowebshop.tricentis.com
+  # Threads: 5  |  CSV: data.csv
+  # ══════════════════════════════════════════════════════════════
+  assignment-2-data-driven:
+    name: "Assignment 2 – Data-Driven Search"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Install JMeter ${{ env.JMETER_VERSION }}
+        run: |
+          wget -q "https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-${JMETER_VERSION}.tgz"
+          tar -xzf "apache-jmeter-${JMETER_VERSION}.tgz"
+          echo "JMETER_HOME=$PWD/apache-jmeter-${JMETER_VERSION}" >> "$GITHUB_ENV"
+          echo "$PWD/apache-jmeter-${JMETER_VERSION}/bin" >> "$GITHUB_PATH"
+
+      - name: Run Assignment 2
+        # data.csv must sit beside the JMX (it is already there in the repo)
+        run: |
+          mkdir -p results/assignment-2
+          jmeter -n \
+            -t "Assignment # 02/Assignment-2-The-Data-Driven-Search.jmx" \
+            -l "results/assignment-2/results.jtl" \
+            -e -o "results/assignment-2/report"
+
+      - name: Upload Assignment 2 Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: assignment-2-results
+          path: results/assignment-2/
+          retention-days: 30
+
+  # ══════════════════════════════════════════════════════════════
+  # ASSIGNMENT 3 – Load / Soak / Spike / Stress Tests
+  # Target : test.k6.io
+  # Requires jp@gc Ultimate & Stepping Thread Group plugins
+  # ══════════════════════════════════════════════════════════════
+  assignment-3-performance-tests:
+    name: "Assignment 3 – Load / Soak / Spike / Stress"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false        # run all 4 even if one fails
+      matrix:
+        test:
+          - { name: "LoadTest",   file: "Assignment-3-LoadText.jmx"  }
+          - { name: "SoakTest",   file: "Assignment-3-SoakTest.jmx"  }
+          - { name: "SpikeTest",  file: "Assignment-3-SpikeTest.jmx" }
+          - { name: "StressTest", file: "Assignment-3-StressTest.jmx"}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Install JMeter ${{ env.JMETER_VERSION }}
+        run: |
+          wget -q "https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-${JMETER_VERSION}.tgz"
+          tar -xzf "apache-jmeter-${JMETER_VERSION}.tgz"
+          echo "JMETER_HOME=$PWD/apache-jmeter-${JMETER_VERSION}" >> "$GITHUB_ENV"
+          echo "$PWD/apache-jmeter-${JMETER_VERSION}/bin" >> "$GITHUB_PATH"
+
+      - name: Install jp@gc Plugins (UltimateThreadGroup & SteppingThreadGroup)
+        run: |
+          # Install PluginsManager
+          wget -q -O "${JMETER_HOME}/lib/ext/jmeter-plugins-manager-${JMETER_PLUGINS_MANAGER_VERSION}.jar" \
+            "https://repo1.maven.org/maven2/kg/apc/jmeter-plugins-manager/${JMETER_PLUGINS_MANAGER_VERSION}/jmeter-plugins-manager-${JMETER_PLUGINS_MANAGER_VERSION}.jar"
+
+          # Install CmdRunner (needed by PluginsManagerCMD)
+          wget -q -O "${JMETER_HOME}/lib/cmdrunner-${CMDRUNNER_VERSION}.jar" \
+            "https://repo1.maven.org/maven2/kg/apc/cmdrunner/${CMDRUNNER_VERSION}/cmdrunner-${CMDRUNNER_VERSION}.jar"
+
+          # Generate PluginsManagerCMD script
+          java -cp "${JMETER_HOME}/lib/cmdrunner-${CMDRUNNER_VERSION}.jar" \
+            org.qatools.rp.CmdRunner \
+            --tool org.jmeterplugins.repository.PluginManagerCMDInstaller 2>/dev/null || true
+
+          # Install the required plugins
+          "${JMETER_HOME}/bin/PluginsManagerCMD.sh" install \
+            jpgc-casutg,jpgc-graphs-basic || true
+
+      - name: Run Assignment 3 – ${{ matrix.test.name }}
+        run: |
+          mkdir -p "results/assignment-3/${{ matrix.test.name }}"
+          jmeter -n \
+            -t "Assignment # 03/${{ matrix.test.file }}" \
+            -l "results/assignment-3/${{ matrix.test.name }}/results.jtl" \
+            -e -o "results/assignment-3/${{ matrix.test.name }}/report"
+
+      - name: Upload Assignment 3 – ${{ matrix.test.name }} Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: assignment-3-${{ matrix.test.name }}-results
+          path: results/assignment-3/${{ matrix.test.name }}/
+          retention-days: 30
+
+  # ══════════════════════════════════════════════════════════════
+  # ASSIGNMENT 4 – Petstore API Load Test
+  # Target : petstore.swagger.io
+  # Threads: 50  |  Ramp-up: 120 s  |  Loops: 20
+  # ══════════════════════════════════════════════════════════════
+  assignment-4-petstore-api:
+    name: "Assignment 4 – Petstore API Load Test"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Install JMeter ${{ env.JMETER_VERSION }}
+        run: |
+          wget -q "https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-${JMETER_VERSION}.tgz"
+          tar -xzf "apache-jmeter-${JMETER_VERSION}.tgz"
+          echo "JMETER_HOME=$PWD/apache-jmeter-${JMETER_VERSION}" >> "$GITHUB_ENV"
+          echo "$PWD/apache-jmeter-${JMETER_VERSION}/bin" >> "$GITHUB_PATH"
+
+      - name: Run Assignment 4
+        run: |
+          mkdir -p results/assignment-4
+          jmeter -n \
+            -t "Assignment # 04/petstore-api-test.jmx" \
+            -l "results/assignment-4/results.jtl" \
+            -e -o "results/assignment-4/report"
+
+      - name: Check for Test Failures
+        run: |
+          FAIL_COUNT=$(grep -c ",false," results/assignment-4/results.jtl 2>/dev/null || echo 0)
+          echo "Failed samples: $FAIL_COUNT"
+          if [ "$FAIL_COUNT" -gt "0" ]; then
+            echo "::warning::$FAIL_COUNT sample(s) failed in Assignment 4"
+          fi
+
+      - name: Upload Assignment 4 Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: assignment-4-results
+          path: results/assignment-4/
+          retention-days: 30
+
+  # ══════════════════════════════════════════════════════════════
+  # SUMMARY – Posts a single status comment after all jobs finish
+  # ══════════════════════════════════════════════════════════════
+  summary:
+    name: "Test Summary"
+    runs-on: ubuntu-latest
+    needs:
+      - assignment-1-load-test
+      - assignment-2-data-driven
+      - assignment-3-performance-tests
+      - assignment-4-petstore-api
+    if: always()
+    steps:
+      - name: Print Summary
+        run: |
+          echo "## JMeter Assignment Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Assignment | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Assignment 1 – Demo Load Test        | ${{ needs.assignment-1-load-test.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Assignment 2 – Data-Driven Search     | ${{ needs.assignment-2-data-driven.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Assignment 3 – Load/Soak/Spike/Stress | ${{ needs.assignment-3-performance-tests.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Assignment 4 – Petstore API           | ${{ needs.assignment-4-petstore-api.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Download individual HTML reports from the **Artifacts** section of this run." >> "$GITHUB_STEP_SUMMARY"

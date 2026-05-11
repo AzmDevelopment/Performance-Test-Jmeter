@@ -1,0 +1,129 @@
+name: JMeter Performance Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  jmeter-test:
+    name: Run JMeter Performance Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Install JMeter
+        run: |
+          wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.3.tgz
+          tar -xzf apache-jmeter-5.6.3.tgz
+          echo "JMETER_HOME=$(pwd)/apache-jmeter-5.6.3" >> $GITHUB_ENV
+          echo "$(pwd)/apache-jmeter-5.6.3/bin" >> $GITHUB_PATH
+      
+      - name: Verify JMeter installation
+        run: |
+          jmeter --version
+      
+      - name: Create results directory
+        run: mkdir -p test-results
+      
+      - name: Run JMeter test
+        run: |
+          jmeter -n \
+            -t petstore-api-test.jmx \
+            -l test-results/results.jtl \
+            -e \
+            -o test-results/html-report
+        continue-on-error: true
+      
+      - name: Display test summary
+        if: always()
+        run: |
+          if [ -f test-results/results.jtl ]; then
+            echo "=== JMeter Test Results Summary ==="
+            echo "Total samples: $(grep -c '<httpSample' test-results/results.jtl || echo '0')"
+            echo "Failed samples: $(grep 'success="false"' test-results/results.jtl | wc -l || echo '0')"
+            echo ""
+            echo "First 20 lines of results:"
+            head -n 20 test-results/results.jtl
+          else
+            echo "No results file found"
+          fi
+      
+      - name: Upload JMeter results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jmeter-results
+          path: test-results/results.jtl
+          retention-days: 30
+      
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jmeter-html-report
+          path: test-results/html-report/
+          retention-days: 30
+      
+      - name: Check for test failures
+        run: |
+          if [ -f test-results/results.jtl ]; then
+            FAILURES=$(grep 'success="false"' test-results/results.jtl | wc -l || echo '0')
+            if [ "$FAILURES" -gt 0 ]; then
+              echo "❌ Test failed with $FAILURES failures"
+              exit 1
+            else
+              echo "✅ All tests passed successfully"
+            fi
+          else
+            echo "❌ No results file found"
+            exit 1
+          fi
+      
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## 🧪 JMeter Performance Test Results\n\n';
+            
+            try {
+              const resultsFile = 'test-results/results.jtl';
+              if (fs.existsSync(resultsFile)) {
+                const content = fs.readFileSync(resultsFile, 'utf8');
+                const total = (content.match(/<httpSample/g) || []).length;
+                const failures = (content.match(/success="false"/g) || []).length;
+                const success = total - failures;
+                
+                comment += `- **Total Requests**: ${total}\n`;
+                comment += `- **Successful**: ${success} ✅\n`;
+                comment += `- **Failed**: ${failures} ${failures > 0 ? '❌' : '✅'}\n`;
+                comment += `- **Success Rate**: ${total > 0 ? ((success/total)*100).toFixed(2) : 0}%\n\n`;
+                comment += `📊 [View detailed HTML report in artifacts](${context.payload.pull_request.html_url}/checks)\n`;
+              } else {
+                comment += '⚠️ No test results found\n';
+              }
+            } catch (error) {
+              comment += `⚠️ Error reading results: ${error.message}\n`;
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

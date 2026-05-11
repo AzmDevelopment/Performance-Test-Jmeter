@@ -1,0 +1,31 @@
+timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect
+1775723858645,2838,Dashboard,200,OK,Thread Group 1-2,text,true,,35602,633,5,5,https://demowebshop.tricentis.com/,2716,0,2258
+1775723858938,2581,Dashboard,200,OK,Thread Group 1-4,text,true,,35602,633,5,5,https://demowebshop.tricentis.com/,2432,0,1965
+1775723858645,2886,Dashboard,200,OK,Thread Group 1-1,text,true,,35602,633,5,5,https://demowebshop.tricentis.com/,2743,0,2258
+1775723858753,2778,Dashboard,200,OK,Thread Group 1-3,text,true,,35602,633,5,5,https://demowebshop.tricentis.com/,2636,0,2150
+1775723859138,2410,Dashboard,200,OK,Thread Group 1-5,text,true,,35602,633,5,5,https://demowebshop.tricentis.com/,2269,0,1765
+1775723861530,664,Search Item,200,OK,Thread Group 1-4,text,true,,23867,850,5,5,https://demowebshop.tricentis.com/search?q=electronics,661,0,0
+1775723858935,3245,Test,200,"Number of samples in transaction : 2, number of failing samples : 0",Thread Group 1-4,,true,,59469,1483,5,5,null,3093,19,1965
+1775723861521,695,Search Item,200,OK,Thread Group 1-2,text,true,,27177,843,5,5,https://demowebshop.tricentis.com/search?q=book,690,0,0
+1775723858546,3533,Test,200,"Number of samples in transaction : 2, number of failing samples : 0",Thread Group 1-2,,true,,62779,1476,5,5,null,3406,140,2258
+1775723861541,771,Search Item,200,OK,Thread Group 1-1,text,true,,31674,847,5,5,https://demowebshop.tricentis.com/search?q=computer,769,0,0
+1775723861540,772,Search Item,200,OK,Thread Group 1-3,text,true,,27193,845,5,5,https://demowebshop.tricentis.com/search?q=laptop,770,0,0
+1775723858396,3657,Test,200,"Number of samples in transaction : 2, number of failing samples : 0",Thread Group 1-1,,true,,67276,1480,5,5,null,3512,261,2258
+1775723858747,3550,Test,200,"Number of samples in transaction : 2, number of failing samples : 0",Thread Group 1-3,,true,,62795,1478,5,5,null,3406,18,2150
+1775723861555,808,Search Item,200,OK,Thread Group 1-5,text,true,,31965,848,5,5,https://demowebshop.tricentis.com/search?q=gift+card,806,0,0
+1775723859132,3218,Test,200,"Number of samples in transaction : 2, number of failing samples : 0",Thread Group 1-5,,true,,67567,1481,5,5,null,3075,16,1765
+1775723862215,397,Dashboard,200,OK,Thread Group 1-4,text,true,,35602,633,5,5,https://demowebshop.tricentis.com/,395,0,0
+1775723862224,393,Dashboard,200,OK,Thread Group 1-2,text,true,,35602,633,5,5,https://demowebshop.tricentis.com/,391,0,0
+1775723862623,1037,Search Item,200,OK,Thread Group 1-2,text,true,,27177,843,5,5,https://demowebshop.tricentis.com/search?q=book,589,0,0
+1775723862221,1430,Test,200,"Number of samples in transaction : 2, number of failing samples : 0",Thread Group 1-2,,true,,62779,1476,5,5,null,980,12,0
+1775723862368,1794,Dashboard,200,OK,Thread Group 1-5,text,true,,35602,633,4,4,https://demowebshop.tricentis.com/,464,0,0
+1775723864165,579,Search Item,200,OK,Thread Group 1-5,text,true,,31965,848,4,4,https://demowebshop.tricentis.com/search?q=gift+card,572,0,0
+1775723862366,2373,Test,200,"Number of samples in transaction : 2, number of failing samples : 0",Thread Group 1-5,,true,,67567,1481,4,4,null,1036,13,0
+1775723862317,2485,Dashboard,200,OK,Thread Group 1-1,text,true,,35602,633,3,3,https://demowebshop.tricentis.com/,700,0,0
+1775723862616,3095,Search Item,200,OK,Thread Group 1-4,text,true,,31674,847,3,3,https://demowebshop.tricentis.com/search?q=computer,1193,0,0
+1775723864806,905,Search Item,200,OK,Thread Group 1-1,text,true,,27193,845,3,3,https://demowebshop.tricentis.com/search?q=laptop,620,0,0
+1775723862212,3492,Test,200,"Number of samples in transaction : 2, number of failing samples : 0",Thread Group 1-4,,true,,67276,1480,3,3,null,1588,11,0
+1775723862315,3390,Test,200,"Number of samples in transaction : 2, number of failing samples : 0",Thread Group 1-1,,true,,62795,1478,3,3,null,1320,10,0
+1775723862316,3658,Dashboard,200,OK,Thread Group 1-3,text,true,,35602,633,1,1,https://demowebshop.tricentis.com/,516,0,0
+1775723865979,1012,Search Item,200,OK,Thread Group 1-3,text,true,,23867,850,1,1,https://demowebshop.tricentis.com/search?q=electronics,575,0,0
+1775723862315,4670,Test,200,"Number of samples in transaction : 2, number of failing samples : 0",Thread Group 1-3,,true,,59469,1483,1,1,null,1091,8,0

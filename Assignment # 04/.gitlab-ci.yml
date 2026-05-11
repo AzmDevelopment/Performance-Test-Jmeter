@@ -1,0 +1,90 @@
+stages:
+  - test
+  - report
+
+variables:
+  JMETER_VERSION: "5.6.3"
+  JMETER_HOME: "/opt/apache-jmeter-${JMETER_VERSION}"
+
+jmeter_performance_test:
+  stage: test
+  image: ubuntu:22.04
+  
+  before_script:
+    # Install dependencies
+    - apt-get update && apt-get install -y wget openjdk-17-jdk curl
+    - java -version
+    
+    # Download and install JMeter
+    - wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-${JMETER_VERSION}.tgz
+    - tar -xzf apache-jmeter-${JMETER_VERSION}.tgz -C /opt/
+    - export PATH="${JMETER_HOME}/bin:${PATH}"
+    - jmeter --version
+    
+    # Create results directory
+    - mkdir -p test-results
+  
+  script:
+    # Run JMeter test
+    - |
+      jmeter -n \
+        -t petstore-api-test.jmx \
+        -l test-results/results.jtl \
+        -e \
+        -o test-results/html-report || true
+    
+    # Display summary
+    - echo "=== JMeter Test Results Summary ==="
+    - |
+      if [ -f test-results/results.jtl ]; then
+        TOTAL=$(grep -c '<httpSample' test-results/results.jtl || echo '0')
+        FAILURES=$(grep 'success="false"' test-results/results.jtl | wc -l || echo '0')
+        SUCCESS=$((TOTAL - FAILURES))
+        echo "Total samples: $TOTAL"
+        echo "Successful: $SUCCESS"
+        echo "Failed: $FAILURES"
+        
+        if [ "$FAILURES" -gt 0 ]; then
+          echo "❌ Test failed with $FAILURES failures"
+          exit 1
+        else
+          echo "✅ All tests passed successfully"
+        fi
+      else
+        echo "❌ No results file found"
+        exit 1
+      fi
+  
+  artifacts:
+    name: "jmeter-results-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
+    when: always
+    paths:
+      - test-results/results.jtl
+      - test-results/html-report/
+    expire_in: 30 days
+    reports:
+      junit: test-results/results.jtl
+  
+  only:
+    - main
+    - develop
+    - merge_requests
+  
+  tags:
+    - docker
+
+# Optional: Generate and publish HTML report
+pages:
+  stage: report
+  dependencies:
+    - jmeter_performance_test
+  script:
+    - mkdir -p public
+    - cp -r test-results/html-report/* public/ || echo "No HTML report to publish"
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
+  only:
+    - main
+  when: always
