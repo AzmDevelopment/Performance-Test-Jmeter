@@ -168,12 +168,11 @@ jobs:
           retention-days: 30
 
   # ══════════════════════════════════════════════════════════════
-  # ASSIGNMENT 4 – Petstore API Load Test
-  # Target : petstore.swagger.io
-  # Threads: 50  |  Ramp-up: 120 s  |  Loops: 20
+  # ASSIGNMENT 4 – Marketplace API Load Test
+  # Threads: 1  |  Ramp-up: 5  |  Loops: 1
   # ══════════════════════════════════════════════════════════════
-  assignment-4-petstore-api:
-    name: "Assignment 4 – Petstore API Load Test"
+  assignment-4-marketplace-api:
+    name: "Assignment 4 – Marketplace API Load Test"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -195,7 +194,7 @@ jobs:
         run: |
           mkdir -p results/assignment-4
           jmeter -n \
-            -t "Assignment # 04/petstore-api-test.jmx" \
+            -t "Assignment # 04/MarketPlaceTest.jmx" \
             -l "results/assignment-4/results.jtl" \
             -e -o "results/assignment-4/report"
 
@@ -225,7 +224,7 @@ jobs:
       - assignment-1-load-test
       - assignment-2-data-driven
       - assignment-3-performance-tests
-      - assignment-4-petstore-api
+      - assignment-4-marketplace-api
     if: always()
     steps:
       - name: Print Summary
@@ -237,6 +236,6 @@ jobs:
           echo "| Assignment 1 – Demo Load Test        | ${{ needs.assignment-1-load-test.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Assignment 2 – Data-Driven Search     | ${{ needs.assignment-2-data-driven.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Assignment 3 – Load/Soak/Spike/Stress | ${{ needs.assignment-3-performance-tests.result }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Assignment 4 – Petstore API           | ${{ needs.assignment-4-petstore-api.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Assignment 4 – Marketplace API           | ${{ needs.assignment-4-marketplace-api.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "Download individual HTML reports from the **Artifacts** section of this run." >> "$GITHUB_STEP_SUMMARY"

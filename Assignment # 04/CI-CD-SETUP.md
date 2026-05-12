@@ -1,6 +1,6 @@
 # CI/CD Pipeline Setup for JMeter Tests
 
-This document explains how to set up and use the CI/CD pipelines for automated JMeter performance testing of the Petstore API.
+This document explains how to set up and use the CI/CD pipelines for automated JMeter performance testing of the Marketplace API.
 
 ## Overview
 
@@ -11,7 +11,7 @@ Three CI/CD pipeline configurations are provided:
 
 All pipelines perform the same core tasks:
 - Install Apache JMeter on Ubuntu runner
-- Execute [`petstore-api-test.jmx`](petstore-api-test.jmx:1)
+- Execute [`MarketPlaceTest.jmx`](MarketPlaceTest.jmx:1)
 - Generate test results and HTML reports
 - Archive artifacts (results.jtl and HTML report)
 - Validate test success/failure
@@ -178,7 +178,7 @@ Failed: 0
 - `JMETER_VERSION` - JMeter version (default: 5.6.3)
 - `THREAD_COUNT` - Number of threads/users (default: 1)
 - `LOOP_COUNT` - Number of iterations (default: 1)
-- `PET_ID` - Pet ID for testing (default: 123)
+- `BASE_URL_1` - Marketplace API host (default: marketplace-qa.azm-dev.com)
 
 ✅ **Multi-Stage Pipeline**
 1. **Setup** - Clean workspace and create directories
@@ -208,7 +208,7 @@ Failed: 0
    - Customize values:
      - Thread Count: 10
      - Loop Count: 5
-     - Pet ID: 456
+     - Base URL: marketplace-qa.azm-dev.com
    - Click **Build**
 
 #### View Results
@@ -232,7 +232,7 @@ Failed: 0
 JMETER_VERSION: 5.6.3
 THREAD_COUNT: 10
 LOOP_COUNT: 100
-PET_ID: 789
+BASE_URL_1: marketplace-qa.azm-dev.com
 ```
 
 ### Notifications
@@ -277,7 +277,7 @@ parameters {
 
 ### Test Plan Location
 
-All pipelines expect [`petstore-api-test.jmx`](petstore-api-test.jmx:1) in the repository root. To change:
+All pipelines expect [`MarketPlaceTest.jmx`](MarketPlaceTest.jmx:1) in the Assignment # 04 folder. To change:
 
 **GitHub Actions:**
 ```yaml
@@ -316,7 +316,7 @@ sh """
 
 **Sample**:
 ```xml
-<httpSample t="523" lt="456" ts="1744617711000" s="true" lb="POST - Add New Pet" rc="200" rm="OK">
+<httpSample t="523" lt="456" ts="1744617711000" s="true" lb="Login" rc="200" rm="OK">
   <responseHeader>...</responseHeader>
 </httpSample>
 ```
@@ -407,7 +407,7 @@ grep -oP 't="\K[0-9]+' results.jtl
 **Error**: `❌ Test failed with X failures`
 
 **Solution**:
-1. Check API availability: `curl https://petstore.swagger.io/v2/pet/123`
+1. Check API availability against your Marketplace QA endpoint (example: `curl https://marketplace-qa.azm-dev.com/health`)
 2. Review results.jtl for error messages
 3. Check assertion configuration in JMX file
 4. Verify network connectivity from runner
@@ -458,14 +458,14 @@ jmeter_test:
 Add to JMeter command:
 ```bash
 jmeter -n -t test.jmx \
-  -JpetId=123 \
+  -JbaseUrl=marketplace-qa.azm-dev.com \
   -Jthreads=10 \
   -Jduration=60
 ```
 
 Then use in JMX:
 ```xml
-<stringProp name="Argument.value">${__P(petId,123)}</stringProp>
+<stringProp name="Argument.value">${__P(baseUrl,marketplace-qa.azm-dev.com)}</stringProp>
 ```
 
 ### Performance Thresholds
@@ -582,9 +582,9 @@ Purpose: Test sudden load
 - [Jenkins Pipeline](https://www.jenkins.io/doc/book/pipeline/)
 
 ### Test Plan Files
-- [`petstore-api-test.jmx`](petstore-api-test.jmx:1) - JMeter test plan
-- [`README-petstore-test.md`](README-petstore-test.md:1) - Test documentation
-- [`plans/petstore-jmeter-plan.md`](plans/petstore-jmeter-plan.md:1) - Architecture plan
+- [`MarketPlaceTest.jmx`](MarketPlaceTest.jmx:1) - JMeter test plan
+- [`README.md`](../README.md:1) - Test documentation
+- [`CI-CD-SETUP.md`](CI-CD-SETUP.md:1) - CI/CD setup and architecture notes
 
 ### Pipeline Files
 - [`.github/workflows/jmeter-test.yml`](.github/workflows/jmeter-test.yml:1) - GitHub Actions

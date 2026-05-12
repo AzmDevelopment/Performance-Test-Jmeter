@@ -11,7 +11,7 @@
 - [Assignment 1 – First Demo Load Test](#assignment-1--first-demo-load-test)
 - [Assignment 2 – Data-Driven Search](#assignment-2--data-driven-search)
 - [Assignment 3 – Performance Test Types](#assignment-3--performance-test-types)
-- [Assignment 4 – Petstore API Load Test](#assignment-4--petstore-api-load-test)
+- [Assignment 4 – Marketplace API Load Test](#assignment-4--marketplace-api-load-test)
 - [CI/CD – Run All Tests with One Click](#cicd--run-all-tests-with-one-click)
 - [Running Tests Locally](#running-tests-locally)
 - [Viewing Reports](#viewing-reports)
@@ -43,8 +43,8 @@
 │   └── Assignment-3-StressTest.jmx
 │
 └── Assignment # 04/
-    ├── petstore-api-test.jmx
-    └── CI-CD-SETUP.md
+  ├── MarketPlaceTest.jmx
+  └── CI-CD-SETUP.md
 ```
 
 ---
@@ -214,40 +214,66 @@ Gradually steps up load beyond normal capacity to find the breaking point of the
 
 ---
 
-## Assignment 4 – Petstore API Load Test
+## Assignment 4 - Marketplace API Load Test
 
-**File:** `Assignment # 04/petstore-api-test.jmx`  
-**Target:** `https://petstore.swagger.io/v2`
+**File:** `Assignment # 04/MarketPlaceTest.jmx`
 
 ### What It Tests
-REST API load test against the Swagger Petstore, exercising a create-then-read pattern with HTTP response assertions.
+API authentication flow on Marketplace QA:
+1. Admin login
+2. Logout
 
-### API Flow
-1. **POST /v2/pet** — Creates a new pet with JSON body:
-   ```json
-   {
-     "id": 123,
-     "category": { "id": 1, "name": "Dogs" },
-     "name": "JMeter Test Dog",
-     "photoUrls": ["https://example.com/photo.jpg"],
-     "tags": [{ "id": 1, "name": "test" }],
-     "status": "available"
-   }
-   ```
-   → **Assertion:** HTTP 200
+This plan validates that auth endpoints respond correctly under scripted execution.
 
-2. **GET /v2/pet/123** — Retrieves the pet by ID  
-   → **Assertion:** HTTP 200
+### API Flow (from `MarketPlaceTest.jmx`)
+1. **POST /api/auth/admin/login**
+  - Header(s): `accept: application/json`, `content-type: application/json`
+  - JSON body includes email/password credentials
+  - Expected result: successful login response
+
+2. **POST /api/auth/logout**
+  - Header(s): `Accept: */*`
+  - Expected result: successful logout response
 
 ### Thread Configuration
 | Parameter | Value |
 |---|---|
-| Virtual Users | 50 |
-| Ramp-up | 120 seconds |
-| Loops per Thread | 20 |
+| Virtual Users | 1 |
+| Ramp-up | 1 second |
+| Loops per Thread | 1 |
 | On Sample Error | Continue |
-| Content-Type Header | `application/json` |
-| Variable `${petId}` | `123` |
+| Protocol | `https` |
+| Base Host Variable | `${BASE_URL_1}=marketplace-qa.azm-dev.com` |
+
+### Shift-Left Approach (RooCode + Claude)
+
+#### Phase 1: AI-Powered API Conversion
+Instead of manually creating HTTP requests for every API endpoint, use your AI CoPilot to do the heavy lifting.
+
+1. Provide the AI with the Swagger JSON URL.
+2. Prompt the AI:
+
+  `Act as a Performance Engineer. Parse this Swagger API definition and generate a JMeter .jmx test plan. Include the 'Add a new pet to the store' (POST) and 'Find pet by ID' (GET) endpoints. Parameterize the Pet ID.`
+
+3. Review the generated `.jmx` file:
+  - Are headers correct (`Content-Type: application/json`)?
+  - Are body payloads valid for the API schema?
+  - Are variables/parameters reusable (for example, pet ID)?
+
+#### Phase 2: CI/CD Pipeline Automation
+We want this test to run automatically, not only on local machines.
+
+1. Ask RooCode to generate the pipeline YAML.
+2. Prompt the AI:
+
+  `Create a CI/CD pipeline configuration that installs JMeter on an Ubuntu runner, executes the .jmx file we just created, and outputs the results.jtl file as a build artifact.`
+
+3. Validate generated workflow behavior:
+  - Installs Java + JMeter
+  - Runs JMeter in non-GUI mode (`jmeter -n`)
+  - Publishes `results.jtl` and report artifacts
+
+This is the core shift-left model used here: APIs -> AI-generated JMeter plan (Claude) -> AI-generated CI workflow (RooCode) -> automated execution on every change.
 
 ---
 
@@ -267,7 +293,7 @@ workflow_dispatch (one click)
         │       ├── SoakTest
         │       ├── SpikeTest
         │       └── StressTest
-        ├── Job: assignment-4-petstore-api        (parallel)
+        ├── Job: assignment-4-marketplace-api     (parallel)
         │
         └── Job: summary  ← waits for all, prints pass/fail table
 ```
@@ -356,7 +382,7 @@ jmeter -n \
 
 # Assignment 4
 jmeter -n \
-  -t "Assignment # 04/petstore-api-test.jmx" \
+  -t "Assignment # 04/MarketPlaceTest.jmx" \
   -l results-a4.jtl \
   -e -o report-a4/
 ```
