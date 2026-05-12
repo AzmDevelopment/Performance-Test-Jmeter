@@ -42,7 +42,7 @@ jobs:
       - name: Run JMeter test
         run: |
           jmeter -n \
-            -t petstore-api-test.jmx \
+            -t MarketPlaceTest.jmx \
             -l test-results/results.jtl \
             -e \
             -o test-results/html-report
